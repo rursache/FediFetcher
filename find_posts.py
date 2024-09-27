@@ -1546,32 +1546,7 @@ def main():
     LOCK_FILE = arguments.lock_file
 
     if( os.path.exists(LOCK_FILE)):
-        logger.debug(f"Lock file exists at {LOCK_FILE}")
-
-        try:
-            with open(LOCK_FILE, "r", encoding="utf-8") as f:
-                lock_time = parser.parse(f.read())
-
-            if (datetime.now() - lock_time).total_seconds() >= arguments.lock_hours * 60 * 60:
-                os.remove(LOCK_FILE)
-                logger.debug("Lock file has expired. Removed lock file.")
-            else:
-                logger.critical(f"Lock file age is {datetime.now() - lock_time} - below --lock-hours={arguments.lock_hours} provided.")
-                if(arguments.on_fail != None and arguments.on_fail != ''):
-                    try:
-                        get(f"{arguments.on_fail}?rid={runId}", ignore_robots_txt = True)
-                    except Exception as ex:
-                        logger.error(f"Error getting callback url: {ex}")
-                sys.exit(1)
-
-        except Exception:
-            logger.critical("Cannot read logfile age - aborting.")
-            if(arguments.on_fail != None and arguments.on_fail != ''):
-                try:
-                    get(f"{arguments.on_fail}?rid={runId}", ignore_robots_txt = True)
-                except Exception as ex:
-                    logger.error(f"Error getting callback url: {ex}")
-            sys.exit(1)
+        os.remove(LOCK_FILE)
 
     with open(LOCK_FILE, "w", encoding="utf-8") as f:
         f.write(f"{datetime.now()}")
