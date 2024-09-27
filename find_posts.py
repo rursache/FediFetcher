@@ -510,6 +510,8 @@ def toot_context_can_be_fetched(toot):
 
 
 def toot_context_should_be_fetched(toot):
+    global recently_checked_context
+    
     if toot['uri'] not in recently_checked_context:
         recently_checked_context[toot['uri']] = toot
         return True
@@ -535,6 +537,8 @@ def toot_context_should_be_fetched(toot):
     return False
 
 def get_all_known_context_urls(server, reply_toots, parsed_urls, seen_hosts):
+    global recently_checked_context
+    
     """get the context toots of the given toots from their original server"""
     known_context_urls = set()
 
@@ -1084,6 +1088,7 @@ def get_robots_txt_cache_path(robots_url):
     return os.path.join(arguments.state_dir, f'robots-{hash.hexdigest()}.txt')
 
 def get_cached_robots(robots_url):
+    global ROBOTS_TXT
     ## firstly: check the in-memory cache
     if robots_url in ROBOTS_TXT:
         return ROBOTS_TXT[robots_url]
@@ -1099,6 +1104,8 @@ def get_cached_robots(robots_url):
     return None
 
 def get_robots_from_url(robots_url):
+    global ROBOTS_TXT
+    
     robotsTxt = get_cached_robots(robots_url)
     if robotsTxt != None:
         return robotsTxt
@@ -1121,6 +1128,8 @@ def get_robots_from_url(robots_url):
 
 
 def can_fetch(user_agent, url):
+    global INSTANCE_BLOCKLIST
+    
     parsed_uri = urlparse(url)
     robots_url = '{uri.scheme}://{uri.netloc}/robots.txt'.format(uri=parsed_uri)
 
@@ -1472,6 +1481,13 @@ def fetch_timeline_context(timeline_posts, token, parsed_urls, seen_hosts, seen_
 
 def main():
     global arguments
+    
+    global ROBOTS_TXT
+    global replied_toot_server_ids
+    global recently_checked_context
+    global seen_urls
+    global known_followings
+    global recently_checked_users
 
     start = datetime.now()
 
@@ -1546,7 +1562,10 @@ def main():
     LOCK_FILE = arguments.lock_file
 
     if( os.path.exists(LOCK_FILE)):
-        os.remove(LOCK_FILE)
+        try:
+            os.remove(LOCK_FILE)
+        except Exception as ex:
+            logger.error(f"Lock file not removed")
 
     with open(LOCK_FILE, "w", encoding="utf-8") as f:
         f.write(f"{datetime.now()}")
